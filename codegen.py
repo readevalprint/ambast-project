@@ -123,6 +123,7 @@ class SourceGenerator(NodeVisitor):
 
     def signature(self, node):
         want_comma = []
+
         def write_comma():
             if want_comma:
                 self.write(', ')
@@ -163,7 +164,7 @@ class SourceGenerator(NodeVisitor):
     def visit_AugAssign(self, node):
         self.newline(node)
         self.visit(node.target)
-        self.write(BINOP_SYMBOLS[type(node.op)] + '=')
+        self.write(' %s= ' % BINOP_SYMBOLS[type(node.op)])
         self.visit(node.value)
 
     def visit_ImportFrom(self, node):
@@ -176,8 +177,10 @@ class SourceGenerator(NodeVisitor):
 
     def visit_Import(self, node):
         self.newline(node)
-        for item in node.names:
-            self.write('import ')
+        self.write('import ')
+        for idx, item in enumerate(node.names):
+            if idx:
+                self.write(', ')
             self.visit(item)
 
     def visit_Expr(self, node):
@@ -259,7 +262,6 @@ class SourceGenerator(NodeVisitor):
         self.write(':')
         self.newline()
         self.body_or_else(node)
-
 
     def visit_While(self, node):
         self.newline(node)
@@ -448,9 +450,11 @@ class SourceGenerator(NodeVisitor):
         self.write('}')
 
     def visit_BinOp(self, node):
+        self.write('(')
         self.visit(node.left)
         self.write(' %s ' % BINOP_SYMBOLS[type(node.op)])
         self.visit(node.right)
+        self.write(')')
 
     def visit_BoolOp(self, node):
         self.write('(')
