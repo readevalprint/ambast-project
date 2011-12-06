@@ -59,6 +59,10 @@ Held all in memory. It will  _easily_ use all your ram.
 For a var to be reconized as a function, it **must** be called with args and kwargs.
 `else:` is required even if it just contains `pass`. This could be fixed in codegen.
 
+Example output: 
+[example1.txt](https://github.com/readevalprint/ambast-project/blob/master/example1.txt)
+[example2.txt](https://github.com/readevalprint/ambast-project/blob/master/example2.txt)
+
 Plus much much more. Much More.
 
 ## License
