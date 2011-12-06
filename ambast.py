@@ -80,7 +80,7 @@ def kwarg_expander(cls, options, meta, width=3, depth=5):
         multi_kwargs = dict((f, options[f]) for f in cls()._fields)
         field_lists = []
         for field, sub_nodes in multi_kwargs.iteritems():
-            print field, sub_nodes
+            # print field, sub_nodes
             sub_field_lists = []
             for sub_node in sub_nodes:
                 sub_node = kwarg_expander(sub_node, options, meta, width=width, depth=depth - 1)
@@ -101,12 +101,14 @@ def kwarg_expander(cls, options, meta, width=3, depth=5):
 def print_possible(code, width=2, depth=4):
     p = ast.parse(code)
     options, meta = option_generator(p)
-    options['ctx'] = set([ast.Load])
-    k = kwarg_expander(ast.Module, options, meta, width ,depth)
+    print options, meta
+    print '='
+
+    k = kwarg_expander(ast.Module, options, meta, width, depth)
     for i in k:
         try:
             print codegen.to_source(deserialize(i))
-            print '#'
+            print '#' * 10
         except Exception as e:
             print e
             print i
