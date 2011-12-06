@@ -1,4 +1,4 @@
-# Todo: currently for a var to be reconized aas a function, it must have args and kwargs.
+# Todo: currently for a var to be reconized as a function, it must have args and kwargs.
 
 In [1]: import ambast
 In [2]: ambast.print_possible('if a: b(1, 2 ,b=a)\nelse:pass', width=1, depth=7)
