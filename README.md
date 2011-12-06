@@ -22,6 +22,7 @@ will yield:
 because it will see that it is possible to have a number on both sides of a Binary opreration (the +).
 
 Here we see it will also interchange signs with signs:
+
         a + (a * a)
 
 will lead to:
