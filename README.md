@@ -7,11 +7,11 @@ This experiment was based on a fever dream I had in the desert where a lone wolf
 
 I am the wolf.
 
-This is a generator of python code. It does this by paresing out the signifigant elements of an example code string.
+This is a generator of python code. It does this by parsing out the signifigant elements from an example code string.
 It will interchange numbers, with numbers:
 
     1 + 2
-    
+
 will yield:
 
     1 + 1
@@ -42,7 +42,7 @@ will lead to:
         (a + (a + (a * a)))
         (a + (a + (a + a)))
 
-because it will understand that the lft side of a binary operator (the + or *) can have a variable, and the right side can have an expression. 
+because it will understand that the lft side of a binary operator (the + or *) can have a variable, and the right side can have an expression.
 
 The only expression it knows is more binary operations.
 
