@@ -1,8 +1,9 @@
 # Ambast
 Amb = McCarthy's amb that this project initially used.
+
 AST = Pythons Abstract Syntax Tree
 
-This experement was based on a fever dream I had in the desert where a lone wolf who howled, "code begets code".
+This experiment was based on a fever dream I had in the desert where a lone wolf who howled, "code begets code".
 
 I am the wolf.
 
@@ -55,8 +56,9 @@ or
             pass
 
 Held all in memory. It will  _easily_ use all your ram.
-For a var to be reconized aas a function, it **must** be called with args and kwargs.
+For a var to be reconized as a function, it **must** be called with args and kwargs.
 `else:` is required even if it just contains `pass`. This could be fixed in codegen.
+
 Plus much much more. Much More.
 
 ## License
