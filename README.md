@@ -42,7 +42,7 @@ will lead to:
         (a + (a + (a * a)))
         (a + (a + (a + a)))
 
-because it will understand that the lft side of a binary operator (the + or *) can have a variable, and the right side can have an expression.
+because it will understand that the left side of a binary operator (the + or *) can have a variable, and the right side can have an expression.
 
 The only expression it knows is more binary operations.
 
