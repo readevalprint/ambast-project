@@ -1,17 +1,7 @@
 import ast
 import codegen
-from collections import *
 import itertools
-
-
-class AutoVivification(dict):
-    """Implementation of perl's autovivification feature."""
-    def __getitem__(self, item):
-        try:
-            return dict.__getitem__(self, item)
-        except KeyError:
-            value = self[item] = type(self)()
-            return value
+from collections import defaultdict
 
 
 def serialize(node, depth=0):
@@ -65,7 +55,6 @@ def powerset(iterable, l):
     return chain.from_iterable([permutations(s, r) for r in range(1, l + 1)])
 
 
-from collections import defaultdict
 
 
 def option_generator(node):
@@ -86,7 +75,7 @@ def option_generator(node):
     return dict(node_dict), dict(meta)
 
 
-def kwarg_expander(cls, options, meta, depth=5):
+def kwarg_expander(cls, options, meta, width=3, depth=5):
     if depth > 0 and getattr(cls, '__module__', '') == '_ast':
         multi_kwargs = dict((f, options[f]) for f in cls()._fields)
         field_lists = []
@@ -94,9 +83,9 @@ def kwarg_expander(cls, options, meta, depth=5):
             print field, sub_nodes
             sub_field_lists = []
             for sub_node in sub_nodes:
-                sub_node = kwarg_expander(sub_node, options, meta, depth=depth - 1)
+                sub_node = kwarg_expander(sub_node, options, meta, width=width, depth=depth - 1)
                 if field in meta['lists']:
-                    sub_node_product = sum([list(itertools.product(*([sub_node] * n))) for n in range(1, depth+1)], [])
+                    sub_node_product = sum([list(itertools.product(*([sub_node] * n))) for n in range(1, width+1)], [])
                     sub_field_lists += [(field, o) for o in (list(p) for p in  sub_node_product)]
                 else:
                     sub_field_lists += [(field, o) for o in sub_node]
@@ -104,23 +93,21 @@ def kwarg_expander(cls, options, meta, depth=5):
         kwarg_list = [dict(d) for d in itertools.product(*field_lists)]
         return [(cls, l) for l in kwarg_list]
     if getattr(cls, '__module__', '') == '_ast':
+        return []
         return [(cls, {})]
     return [cls]
 
 
-def set_generator(options):
-    def wrapper():
-        for o in options:
-            yield o
-    return wrapper
-
-
-def doubles(node, **kwargs):
-    d = {}
-    if isinstance(node, ast.AST):
-        for k, v in node.__dict__.items():
-            if k in node._fields:
-                d[k] = doubles(v, parent=node)
-        l = list(dict(d) for d in itertools.product(*[[(k,vv) for vv in v] for k, v in d.iteritems()]))
-
+def print_possible(code, width=2, depth=4):
+    p = ast.parse(code)
+    options, meta = option_generator(p)
+    options['ctx'] = set([ast.Load])
+    k = kwarg_expander(ast.Module, options, meta, width ,depth)
+    for i in k:
+        try:
+            print codegen.to_source(deserialize(i))
+            print '#'
+        except Exception as e:
+            print e
+            print i
 
