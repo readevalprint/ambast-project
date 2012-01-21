@@ -2,8 +2,7 @@ import ast
 import codegen
 import itertools
 from collections import defaultdict
-import json
-
+import pprint
 
 def serialize(node, depth=0):
     d = {}
@@ -107,7 +106,7 @@ def print_possible(code, width=2, depth=4):
 
     k = kwarg_expander(ast.Module, options, meta, width, depth)
     for i in k:
-        print json.dumps(i, sort_keys=True, indent=4)
+        print pprint.pprint(i, indent=4)
         try:
             d = deserialize(i)
             print codegen.to_source(d)
