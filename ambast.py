@@ -2,6 +2,7 @@ import ast
 import codegen
 import itertools
 from collections import defaultdict
+import json
 
 
 def serialize(node, depth=0):
@@ -94,22 +95,23 @@ def kwarg_expander(cls, options, meta, width=3, depth=5):
         return [(cls, l) for l in kwarg_list]
     if getattr(cls, '__module__', '') == '_ast':
         return []
-        return [(cls, {})]
     return [cls]
 
 
 def print_possible(code, width=2, depth=4):
     p = ast.parse(code)
     options, meta = option_generator(p)
-    print options, meta
+    print options
+    print meta
     print '='
 
     k = kwarg_expander(ast.Module, options, meta, width, depth)
     for i in k:
+        print json.dumps(i, sort_keys=True, indent=4)
         try:
-            print codegen.to_source(deserialize(i))
+            d = deserialize(i)
+            print codegen.to_source(d)
             print '#' * 10
         except Exception as e:
             print e
-            print i
 
