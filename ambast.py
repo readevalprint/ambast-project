@@ -58,34 +58,64 @@ def powerset(iterable, l):
 
 
 def option_generator(node):
-    node_dict = defaultdict(set)
-    meta = defaultdict(set)
+    node_dict = defaultdict(dict)
+    meta = defaultdict(dict)
     for n in ast.walk(node):
         for k in n._fields:
+            if 'nodes' not in meta[n.__class__]:
+                node_dict[n.__class__] = defaultdict(set)
+                meta[n.__class__]['nodes'] = set()
+                meta[n.__class__]['lists'] = set()
             f = getattr(n, k)
             if isinstance(f, list):
-                node_dict[k] |= set(ff.__class__ for ff in f)
-                meta['nodes'] |= node_dict[k]
-                meta['lists'] |= set([k])
+                node_dict[n.__class__][k] |= set(ff.__class__ for ff in f)
+                meta[n.__class__]['nodes'] |= node_dict[n.__class__][k]
+                meta[n.__class__]['lists'] |= set([k])
             elif getattr(f, '__module__', '') == '_ast':
-                node_dict[k] |= set([f.__class__])
-                meta['nodes'] |= set([f.__class__])
+                node_dict[n.__class__][k] |= set([f.__class__])
+                meta[n.__class__]['nodes'] |= set([f.__class__])
             else:
-                node_dict[k] |= set([f])
+                node_dict[n.__class__][k] |= set([f])
+            node_dict[n.__class__]['ctx'] = set([None])
+            if not node_dict[n.__class__][k]:
+                node_dict[n.__class__][k] = set([None])
     return dict(node_dict), dict(meta)
 
+import functools
+import cPickle
+def memoize(fctn):
+        memory = {}
+        @functools.wraps(fctn)
+        def memo(*args,**kwargs):
+                haxh = cPickle.dumps((args, sorted(kwargs.iteritems())))
 
-def kwarg_expander(cls, options, meta, width=3, depth=5):
+                if haxh not in memory:
+                        memory[haxh] = fctn(*args,**kwargs)
+
+                return memory[haxh]
+        if memo.__doc__:
+            memo.__doc__ = "\n".join([memo.__doc__,"This function is memoized."])
+        return memo
+
+def kwarg_expander(cls, options, meta, height=1, width=3, depth=5, parent_cls=None):
+    if not parent_cls:
+        parent_cls = cls
     if depth > 0 and getattr(cls, '__module__', '') == '_ast':
-        multi_kwargs = dict((f, options[f]) for f in cls()._fields)
+        multi_kwargs = dict((f, options[cls][f]) for f in cls()._fields)
         field_lists = []
         for field, sub_nodes in multi_kwargs.iteritems():
             # print field, sub_nodes
             sub_field_lists = []
             for sub_node in sub_nodes:
-                sub_node = kwarg_expander(sub_node, options, meta, width=width, depth=depth - 1)
-                if field in meta['lists']:
-                    sub_node_product = sum([list(itertools.product(*([sub_node] * n))) for n in range(1, width+1)], [])
+                sub_node = kwarg_expander(sub_node, options, meta, height=height, width=width, depth=depth - 1, parent_cls=cls)
+                if field in meta[cls]['lists']:
+                    min_width = 1
+                    if cls is ast.BoolOp:
+                        min_width = 2
+                        width = 2
+                    if field == 'body':
+                        width = height
+                    sub_node_product = sum([list(itertools.product(*([sub_node] * n))) for n in range(min_width, width+1)], [])
                     sub_field_lists += [(field, o) for o in (list(p) for p in  sub_node_product)]
                 else:
                     sub_field_lists += [(field, o) for o in sub_node]
@@ -97,20 +127,67 @@ def kwarg_expander(cls, options, meta, width=3, depth=5):
     return [cls]
 
 
-def print_possible(code, width=2, depth=4):
+def possible(code, height=1, width=2, depth=4):
     p = ast.parse(code)
     options, meta = option_generator(p)
-    print options
-    print meta
-    print '='
+    return kwarg_expander(ast.Module, options, meta, height=height, width=width, depth=depth)
 
-    k = kwarg_expander(ast.Module, options, meta, width, depth)
+
+
+def print_possible(k):
     for i in k:
-        print pprint.pprint(i, indent=4)
+        print '#' * 10
         try:
             d = deserialize(i)
             print codegen.to_source(d)
-            print '#' * 10
         except Exception as e:
             print e
+
+
+
+def test_possible(k, templete, data, out):
+    for i in k:
+        print '#' * 10
+        try:
+            d = deserialize(i)
+            c = codegen.to_source(d)
+            print c
+            ns = {'data': data, 'out': out, 'good': False}
+            exec (templete % c) in ns
+            if ns['good']:
+                yield c
+        except Exception as e:
+            print e
+
+
+## {{{ http://code.activestate.com/recipes/483752/ (r1)
+import threading
+class TimeoutError(Exception): pass
+
+def timelimit(timeout):
+    def internal(function):
+        def internal2(*args, **kw):
+            class Calculator(threading.Thread):
+                def __init__(self):
+                    threading.Thread.__init__(self)
+                    self.result = None
+                    self.error = None
+
+                def run(self):
+                    try:
+                        self.result = function(*args, **kw)
+                    except:
+                        self.error = sys.exc_info()[0]
+
+            c = Calculator()
+            c.start()
+            c.join(timeout)
+            if c.isAlive():
+                raise TimeoutError
+            if c.error:
+                raise c.error
+            return c.result
+        return internal2
+    return internal
+## end of http://code.activestate.com/recipes/483752/ }}}
 

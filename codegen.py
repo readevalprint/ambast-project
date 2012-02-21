@@ -27,7 +27,8 @@ BINOP_SYMBOLS = {
     RShift:     '>>',
     BitOr:      '|',
     BitAnd:     '&',
-    BitXor:     '^'
+    BitXor:     '^',
+    Pow:        '**'
 }
 
 CMPOP_SYMBOLS = {
@@ -236,7 +237,7 @@ class SourceGenerator(NodeVisitor):
         self.visit(node.test)
         self.write(':')
         self.body(node.body)
-        while True:
+        while node.orelse:
             else_ = node.orelse
             if len(else_) == 1 and isinstance(else_[0], If):
                 node = else_[0]
